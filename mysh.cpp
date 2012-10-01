@@ -9,6 +9,7 @@
 #include <iostream>
 #include <linux/limits.h>
 #include <cerrno>
+#include "stack.h"
 
 /* Spawn a child process running a new program. PROGRAM is the name 
    of the program to run; the path will be searched for this program. 
@@ -41,7 +42,7 @@ int spawn(char* program, char** arg_list)
 	} 
 } 
 
-void split(vector <string> & result, string in_str, string delims)
+void tokenize(vector <string> & result, string in_str, string delims)
 {
 	result.clear();
 	size_t current;
@@ -51,6 +52,7 @@ void split(vector <string> & result, string in_str, string delims)
 		next = in_str.find_first_not_of(delims, next + 1);
 		if (next == string::npos)
 		{
+			// break out of the loop as soon as we find the end.
 			break;
 		}
 		else
@@ -72,7 +74,7 @@ void split(vector <string> & result, string in_str, string delims)
 // 	cout << endl;
 // }
 
-char **CreateArgVFromVector(const vector<string>& allArgs)
+char **createArgVFromVector(const vector<string>& allArgs)
 {
 	int nArgs = allArgs.size();
 	if ( nArgs == 0 )
@@ -87,18 +89,35 @@ char **CreateArgVFromVector(const vector<string>& allArgs)
 	return buf;
 }
 
+void changeDir(string directory)
+{
+	// If dir is empty or ~, the user means their home directory
+	if ((directory == "") || (directory == "~"))
+		directory = getenv("HOME");
+
+	// system call chdir(), checking for errors.
+	int chdir_status = chdir(directory.c_str());
+	if (chdir_status < 0)
+	{
+		printf("%s : %s\n", directory.c_str(), strerror(errno));
+	}
+}
+
 int main() 
 {
 	vector <string> fields;
+	Stack dirStack;
 	
 	string cmd = "";
 	char ** arg_list;
 
 	const char * username = getenv("USER");
 	if (username != 0)
+		// TODO error checking...
 		cout << username << endl;
 	const char * homedir = getenv("HOME");
 	if (homedir != 0)
+		// TODO error checking...
 		cout << homedir << endl;
 
 	while (cmd != "exit")
@@ -117,31 +136,47 @@ int main()
 			break;
 		
 
-		split(fields, cmd, " ");
+		tokenize(fields, cmd, " ");
 
 		if (fields[0] == "cd")
 		{
+			string directory;
 			// allows the user to just type "cd" to go home.
 			if (fields.size() == 1)
 			{
-				fields.push_back(homedir);
-			} // allows the user to type "cd ~" to go home.
-			else if (fields[1] == "~")
-			{
-				fields[1] = string(homedir);
+				directory = "";
 			}
-
-			int chdir_status = chdir(fields[1].c_str());
-			if (chdir_status < 0)
+			// otherwise use the first argument to cd.
+			else
 			{
-				cout << fields[1] << ": " << strerror(errno) << endl;
+				directory = fields[1];
 			}
+			changeDir(directory);
+		}
+		// pushd pushes the current working dir to the stack
+		// then changes to the directory passed
+		else if ((fields[0] == "pushd") && (fields.size() > 1))
+		{
+			dirStack.push(current_path);
+			changeDir(fields[1]);
+		}
+		// popd pops a directory off the path, and then switches to it.
+		else if (fields[0] == "popd")
+		{
+			string directory;
+			dirStack.pop(directory);
+			changeDir(directory);
+		}
+		// dirs just displays all directories in the stack.
+		else if (fields[0] == "dirs")
+		{
+			dirStack.displayAll();
 		}
 		else
 		{
 			// Spawn a child process running the "ls" command. Ignore the returned child process ID.
 			// Cast the arguments to force them to be "const"; removes a compiler warning
-			arg_list = CreateArgVFromVector(fields);
+			arg_list = createArgVFromVector(fields);
 			spawn((char *) arg_list[0], (char **)arg_list);
 		}
 	}

@@ -1,7 +1,7 @@
 CC = g++
 CFLAGS = -c -Wall -O3
 LDFLAGS =
-SOURCES = mysh.cpp
+SOURCES = mysh.cpp stack.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 EXECUTABLE = mysh
 
