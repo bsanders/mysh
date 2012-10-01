@@ -1,0 +1,34 @@
+
+outfile named "mysh"
+a) Read a line from stdin,
+		parse to get the command and its arguments
+			may assume args separated by whitespace; no need to work on "special characters" (/, &, ", ', etc)
+		may set reasonable max of command line args
+		must be able to handle input lines of any length
+
+b) fork a child process to exec command
+		(man fork, man execvp, note diff versions of exec()
+
+c) shell should wait for commands to finish, and exit on 'exit'
+
+d) implement cd (man chdir syscall)
+		note, don't exit the shell if chdir fails
+
+e) implement pushd, popd, dirs
+		note, requires a stack, can use STL
+
+f) be sure to terminate all processes created by shell
+
+
+Psuedocode:
+while (1) {
+	parse_command_line; //get command, args, redirect, etc.
+	if(cmd == exit) exit;
+	p = fork( );
+	if (p == 0) {
+		exec (cmd, args)
+	} else {
+		if (command doesn't end with &) 
+			wait( );
+	}
+}
