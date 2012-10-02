@@ -37,12 +37,12 @@ int spawn(char* program, char** arg_list)
 		printf("\n");
 		int err_status = execvp(program, arg_list);
 		/* The execvp  function returns only if an error occurs.  */ 
-		fprintf(stderr,  "an error occurred in execvp\n"); 
+		fprintf(stderr, "an error occurred in execvp\n"); 
 		abort(); 
 	} 
 } 
 
-void tokenize(vector <string> & result, string in_str, string delims)
+void tokenize(vector <string>& result, string in_str, string delims)
 {
 	result.clear();
 	size_t current;
@@ -62,17 +62,9 @@ void tokenize(vector <string> & result, string in_str, string delims)
 		current = next + 1;
 		next = in_str.find_first_of(delims, current);
 		string result_arg = in_str.substr(current, next - current);
-//		cout << result_arg << endl;
 		result.push_back(result_arg);
 	} while (next != string::npos);
 }
-
-// void print( vector <string> & v )
-// {
-// 	for (size_t n = 0; n < v.size(); n++)
-// 		cout << "\"" << v[ n ] << "\"\n";
-// 	cout << endl;
-// }
 
 char **createArgVFromVector(const vector<string>& allArgs)
 {
@@ -89,14 +81,19 @@ char **createArgVFromVector(const vector<string>& allArgs)
 	return buf;
 }
 
+// Wrapper for the system call chdir
 void changeDir(string directory)
 {
-	// If dir is empty or ~, the user means their home directory
+	// If dir is empty or ~, the user wants their home directory
 	if ((directory == "") || (directory == "~"))
+	{
 		directory = getenv("HOME");
+	}
 
 	// system call chdir(), checking for errors.
 	int chdir_status = chdir(directory.c_str());
+
+	// If there was an error, print the error message.
 	if (chdir_status < 0)
 	{
 		printf("%s : %s\n", directory.c_str(), strerror(errno));
@@ -105,21 +102,29 @@ void changeDir(string directory)
 
 int main() 
 {
-	vector <string> fields;
-	Stack dirStack;
-	
+	// cmd is the input string from the user; replaced with each loop.
 	string cmd = "";
+
+	// fields is a nice easy to work with vector of strings which will hold the args.
+	vector <string> fields;
+	// arg_list is the pointer to a c-string array execvp() expects.
 	char ** arg_list;
+
+	// Stack which will contain pushd/popd directories.
+	Stack dirStack;
 
 	const char * username = getenv("USER");
 	if (username != 0)
+	{
 		// TODO error checking...
-		cout << username << endl;
+	}
 	const char * homedir = getenv("HOME");
 	if (homedir != 0)
+	{
 		// TODO error checking...
-		cout << homedir << endl;
+	}
 
+	// We'll loop until "exit"
 	while (cmd != "exit")
 	{
 		// Note that PATH_MAX actually doesn't mean much of anything.
@@ -127,17 +132,20 @@ int main()
 		// But 4096 characters ought to be enough for anybody.
 		char current_path[PATH_MAX];
 		char * path = getcwd(current_path, PATH_MAX);
-		cout << current_path << "> ";
+		printf("%s@%s> ", username, current_path);
 
 		getline(cin, cmd);
 		
 		// If command starts with exit, break right away.
 		if (cmd.find("exit") == 0)
+		{
 			break;
-		
+		}
 
+		// Otherwise split the cmd string up into arguments.
 		tokenize(fields, cmd, " ");
 
+		// We handle cd, pushd, popd, and dirs ourself.
 		if (fields[0] == "cd")
 		{
 			string directory;
@@ -146,17 +154,19 @@ int main()
 			{
 				directory = "";
 			}
-			// otherwise use the first argument to cd.
+			// otherwise use the first argument after 'cd' as the directory
 			else
 			{
 				directory = fields[1];
 			}
+			// either way, pass it to the wrapper function
 			changeDir(directory);
 		}
 		// pushd pushes the current working dir to the stack
 		// then changes to the directory passed
 		else if ((fields[0] == "pushd") && (fields.size() > 1))
 		{
+			// TODO add try/catch here.
 			dirStack.push(current_path);
 			changeDir(fields[1]);
 		}
@@ -167,20 +177,24 @@ int main()
 			dirStack.pop(directory);
 			changeDir(directory);
 		}
-		// dirs just displays all directories in the stack.
+		// dirs just displays all directories in the stack.  Boring.
+		// Why can't STL's stack have a display function?  Or at least iterators.  Lame!
 		else if (fields[0] == "dirs")
 		{
 			dirStack.displayAll();
 		}
+		// Finally, if we get here, we try to call an executable binary somewhere in the system.
 		else
 		{
-			// Spawn a child process running the "ls" command. Ignore the returned child process ID.
-			// Cast the arguments to force them to be "const"; removes a compiler warning
+			// Convert the vector args to the crazy c-string array pointer business execvp() wants.
 			arg_list = createArgVFromVector(fields);
+			// Spawn a child process ignoring the returned child process ID.
+			// Cast the arguments to force them to be "const"; removes a compiler warning
 			spawn((char *) arg_list[0], (char **)arg_list);
 		}
 	}
 
+	// kthxbai.
 	printf ("Good bye.\n"); 
 
 	return 0; 
