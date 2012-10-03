@@ -3,7 +3,7 @@
  * Date: 09/16/2011
  * Description:
  * A Stack class header file, based on a vector.
- * 
+ * This stack holds strings.
  * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* Stack header file */
 

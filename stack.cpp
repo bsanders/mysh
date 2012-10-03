@@ -3,7 +3,7 @@
  * Date: 09/16/2011
  * Description:
  * A Stack class implementation file, based on a vector.
- * 
+ * This stack holds strings.
  * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* Stack implementation file */
 
