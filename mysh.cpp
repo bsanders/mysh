@@ -5,6 +5,8 @@
  * Description:
  * Implementation file for a unix shell
  * Uses fork() and exec() to implement a looping shell to execute arbitrary commands
+ * As per spec, special characters (particularly commands/files/arguments with whitespace)
+ * are not handled.
  * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include <stdio.h> 
@@ -112,13 +114,14 @@ int main()
 		// then changes to the directory passed
 		else if ((fields[0] == "pushd") && (fields.size() > 1))
 		{
-			// TODO add try/catch here.
+			// TODO add try/catch here.  Not strictly necessary.
 			dirStack.push(current_path);
 			changeDir(fields[1]);
 		}
 		// popd pops a directory off the path, and then switches to it.
 		else if (fields[0] == "popd")
 		{
+			// TODO add try/catch here.  Not strictly necessary.
 			string directory;
 			dirStack.pop(directory);
 			changeDir(directory);
@@ -171,7 +174,7 @@ int spawn(char* executable, char** arg_list)
 		// attempt to run the executable; note execvp() searches the $PATH
 		execvp(executable, arg_list);
 		// The function will only return on an error (such as program not found)
-		fprintf(stderr, "an error occurred in execvp\n"); 
+		fprintf(stderr, "Program or command not found.\n"); 
 		abort();
 	} 
 } 
