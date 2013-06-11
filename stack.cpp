@@ -102,9 +102,8 @@ void Stack::displayAll()
 	{
 		for (int i = top; i >= 0; i--)
 		{
-			printf("%s ",el[i].c_str());
+			printf("%s\n",el[i].c_str());
 		}
-		printf("\n");
 	}
 }
 

@@ -112,19 +112,43 @@ int main()
 		}
 		// pushd pushes the current working dir to the stack
 		// then changes to the directory passed
-		else if ((fields[0] == "pushd") && (fields.size() > 1))
+		else if (fields[0] == "pushd")
 		{
-			// TODO add try/catch here.  Not strictly necessary.
-			dirStack.push(current_path);
-			changeDir(fields[1]);
+			string directory;
+			// If the user just typed pushd, we'll assume like 'cd' they want a shortcut to home.
+			if (fields.size() == 1)
+			{
+				directory = "";
+			}
+			else
+			{
+				directory = fields[1];
+			}
+			// Just in case the stack is full (although our underlying stack uses a vector)
+			try
+			{
+				dirStack.push(current_path);
+				changeDir(directory);
+			}
+			catch (Stack::Overflow)
+			{
+				printf("The stack is full.\n"); // ran out of memory...?
+			}
 		}
 		// popd pops a directory off the path, and then switches to it.
 		else if (fields[0] == "popd")
 		{
-			// TODO add try/catch here.  Not strictly necessary.
-			string directory;
-			dirStack.pop(directory);
-			changeDir(directory);
+			// In case the stack is actually empty.
+			try
+			{
+				string directory;
+				dirStack.pop(directory);
+				changeDir(directory);
+			}
+			catch (Stack::Underflow)
+			{
+				printf("There are no directories on the stack\n");
+			}
 		}
 		// dirs just displays all directories in the stack.  Boring.
 		// Why can't STL's stack have a display function?  Or at least iterators.  Lame!
