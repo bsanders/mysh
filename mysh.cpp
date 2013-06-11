@@ -53,15 +53,15 @@ int main()
 	// Stack which will contain pushd/popd directories.
 	Stack dirStack;
 
+	// const because the program should not modify this variable
 	const char * username = getenv("USER");
-	if (username != 0)
-	{
-		// TODO error checking...
-	}
 	const char * homedir = getenv("HOME");
-	if (homedir != 0)
+	if ((!username) || (!homedir))
 	{
-		// TODO error checking...
+		// TODO more error checking...
+		// perhaps that env var isn't defined
+		// is exiting too harsh?
+		exit(1);
 	}
 
 	// We'll loop until "exit"
