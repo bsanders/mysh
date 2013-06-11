@@ -79,6 +79,7 @@ int main()
 		getline(cin, cmd);
 		
 		// If command starts with exit, break right away.  Don't bother tokenizing.
+		// BUG: " exit" isn't caught, obviously. shell just returns "command not found"
 		if (cmd.find("exit") == 0)
 		{
 			break;
@@ -156,14 +157,18 @@ int main()
 		{
 			dirStack.displayAll();
 		}
-		// Finally, if we get here, we try to call an executable binary somewhere in the system.
+		// Finally, if we get here, we want to call an executable binary somewhere in the system.
 		else
 		{
 			// Convert the vector args to the crazy c-string array pointer business execvp() wants.
 			arg_list = vectorToStringArray(fields);
-			// Spawn a child process ignoring the returned child process ID.
-			// Cast the arguments to force them to be "const"; removes a compiler warning
-			spawn((char *) arg_list[0], (char **)arg_list);
+			// vectorToStringArray() can possibly return null, so we should make sure before accessing it.
+			if (arg_list != NULL)
+			{
+				// Spawn a child process ignoring the returned child process ID.
+				// Cast the arguments to force them to be "const"; removes a compiler warning
+				spawn((char *) arg_list[0], (char **)arg_list);
+			}
 		}
 	}
 
