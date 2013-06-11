@@ -7,6 +7,7 @@
  * Uses fork() and exec() to implement a looping shell to execute arbitrary commands
  * As per spec, special characters (particularly commands/files/arguments with whitespace)
  * are not handled.
+ * TODO: Add history?  Catch command sequences such as CTRL-C, handling of arrow keys
  * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include <stdio.h> 
@@ -215,6 +216,7 @@ int spawn(char* executable, char** arg_list)
 // a string containing all delimiters to break tokens across.
 void tokenize(vector <string>& result, string in_str, string delims)
 {
+	// ensure vector is empty
 	result.clear();
 	size_t current;
 	size_t next = -1;
@@ -243,18 +245,24 @@ void tokenize(vector <string>& result, string in_str, string delims)
 char ** vectorToStringArray(const vector <string>& args)
 {
 	// if args is empty, we obviously have nothing to do here.
-	// should never be the case in this program....
+	// should never be the case in this program...
 	int argCount = args.size();
 	if ( argCount == 0 )
 	{
 		return NULL;
 	}
+	
+	// create the array to house our c-strings
 	char **buf = new char*[argCount + 1];
+	// loop over each string in the vector, creating a new char array of it
 	for (int i = 0; i < argCount; ++i)
 	{
 		buf[i] = new char [args[i].size() + 1];
+		// strcpy() copies a c-string, including its null terminator;
+		// string.c_str() returns a c-string of string, inlcuding a null-terminator
 		strcpy(buf[i], args[i].c_str());
 	}
+	// finally null-terminate the array of c-strings
 	buf[argCount] = NULL;
 	return buf;
 }
@@ -273,7 +281,7 @@ void changeDir(string directory)
 	// system call chdir(), checking for errors.
 	int chdir_status = chdir(directory.c_str());
 
-	// If there was an error, print the error message.
+	// If there was an error (eg "no such file or directory"), print the error message.
 	if (chdir_status < 0)
 	{
 		printf("%s : %s\n", directory.c_str(), strerror(errno));
